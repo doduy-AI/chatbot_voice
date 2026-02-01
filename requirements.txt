@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+typeguard
+websockets
+python-multipart
+torch
+torchaudio
+numpy
+pydantic
+pydantic-settings
+librosa
+scipy

@@ -1,0 +1,78 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual environment
+.env
+.venv
+venv/
+env/
+ENV/
+
+# ======================
+# FastAPI / Uvicorn
+# ======================
+*.log
+logs/
+app.log
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ======================
+# Jupyter / Notebook
+# ======================
+.ipynb_checkpoints/
+
+# ======================
+# Audio / Voice project
+# ======================
+*.wav
+*.mp3
+*.flac
+*.ogg
+audio/
+recordings/
+tmp_audio/
+
+# ======================
+# Model / Checkpoint
+# ======================
+checkpoints/
+models/
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+
+# ======================
+# HuggingFace / Cache
+# ======================
+.cache/
+hf_cache/
+huggingface/
+
+# ======================
+# Kaggle
+# ======================
+kaggle.json
+
+# ======================
+# Env config
+# ======================
+.env.*
+!.env.example
+.env
