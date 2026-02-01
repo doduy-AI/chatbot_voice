@@ -23,13 +23,13 @@ class TTSService:
     def _initialize_model(self):
         try:
             # FIX 2: Cấu hình đúng tham số FastVieNeuTTS hỗ trợ
+            # services/Voice/tts_service.py
             self.tts = FastVieNeuTTS(
                 backbone_repo=self.VOICE_REPO,
                 backbone_device=self.device,
-                memory_util=0.3,           # memory_util=0.3 theo yêu cầu của bạn
-                tp=1,                      # Tensor Parallel
-                enable_prefix_caching=True, # Bật để tăng tốc các câu lặp lại
-                enable_triton=True,        # Bật Triton để đạt tốc độ cao nhất
+                memory_util=0.3,           # Set về 0.3 như bạn muốn
+                enable_triton=True,        # Bật để đạt max tốc độ
+                enable_prefix_caching=True, # Giảm latency cho câu lặp lại
                 codec_repo="neuphonic/distill-neucodec",
                 codec_device=self.device 
             )
@@ -37,9 +37,9 @@ class TTSService:
         except Exception as e:
             print(f"❌ Lỗi khởi tạo Model: {e}")
 
+    # services/Voice/tts_service.py
     def float32_to_pcm16(self, audio_float):
-        # FIX 3: Nhân với 32767.0 để chuyển từ float [-1.0, 1.0] sang int16 nghe rõ được
-        # Nếu không nhân, biên độ sẽ cực nhỏ (0.0002) như bạn đã gặp
+        # Nhân với 32767.0 để đưa về dải âm thanh nghe được
         return (audio_float * 32767.0).clip(-32768, 32767).astype(np.int16).tobytes()
 
     async def stream_audio(self, websocket, text: str, voice_id: str = None):

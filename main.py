@@ -2,6 +2,8 @@ from fastapi import FastAPI
 import uvicorn
 from core.config import settings , setup_cors
 from api.main import api_router
+import os
+os.environ["LMDEPLOY_MODEL_NAME"] = "internlm2"
 
 
 app = FastAPI(title=settings.PROJECT_NAME)
