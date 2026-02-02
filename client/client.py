@@ -81,10 +81,10 @@ async def handle_text_io(websocket, text_input):
             print("--- Kết thúc nói ---")
 
         else:
-            print("⚠️ Cảnh báo: Nhận dữ liệu Binary không mong muốn.")
+            print(" Cảnh báo: Nhận dữ liệu Binary không mong muốn.")
 
     except Exception as e:
-        print(f"❌ Lỗi trao đổi: {e}")
+        print(f" Lỗi trao đổi: {e}")
 
 async def voice_loop():
     print("🤖 Robot sẵn sàng (No-Pop Mode)!")
@@ -101,7 +101,7 @@ async def voice_loop():
                 await handle_text_io(websocket, text_input)
                 await asyncio.sleep(0.5)
     except Exception as e:
-        print(f"❌ Lỗi kết nối: {e}")
+        print(f" Lỗi kết nối: {e}")
     finally:
         # CHỈ ĐÓNG KHI TẮT HẲN CHƯƠNG TRÌNH
         stream_player.stop_stream()
