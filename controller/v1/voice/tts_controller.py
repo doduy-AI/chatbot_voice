@@ -12,7 +12,7 @@ class TTSController:
                 text = await websocket.receive_text()
                 print(f"--- [Server] Nhận text từ {client_id}: {text}")
                 loop = asyncio.get_event_loop()
-                ai_response = await loop.run_in_executor(None, llm_gateway.GEMINI ,text)
+                ai_response = await loop.run_in_executor(None, llm_gateway.GEMINI ,client_id,text)
                 
                 print(f"---[AI Trả Về ] {ai_response}")
                 await tts_service.stream_audio(websocket, ai_response)

@@ -1,4 +1,5 @@
 from core.config import settings
+import google.generativeai as genai
 import requests
 import json
 import re
@@ -6,56 +7,30 @@ import time
 
 class ASK_LLM:
     def __init__(self):
-        self.key = settings.API_GEMINI 
-        # API Endpoint cho Gemini 2.5 Flash
-        self.url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={self.key}"
-        self.url_llm = settings.URL_LLM
-        self.sessions = {}
-    # def clean_text(self, text):
-    #     """Xóa các ký tự markdown để Vieneu đọc mượt hơn"""
-    #     if not text: return ""
-    #     # Xóa dấu sao, dấu thăng, v.v.
-    #     return re.sub(r'[\*\#\_]', '', text).strip()
-
-    def GEMINI(self, prompt):
-        headers = {"Content-Type": "application/json"}
+        genai.configure(api_key=settings.API_GEMINI)
+        self.sessions = {}  
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
         
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": f"Trả lời bằng tiếng việt ngắn ngọn, không dùng tiếng trung quốc , không dùng emoji, không dùng markdown: {prompt}"}]
-                }
-            ],
-            "generationConfig": {
-                "maxOutputTokens": 900,
-                "temperature": 1, 
-                "topP": 0.9
-            }
-        }
-        latency = 0
-        start_time = time.perf_counter()
+    def GEMINI(self, client_id, prompt):
+        # Nếu client chưa có session → tạo mới
+        if client_id not in self.sessions:
+            self.sessions[client_id] = self.model.start_chat(
+                history=[
+                    {
+                        "role": "user",
+                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt ngắn gọn (1–2 câu)."
+                    }
+                ]
+            )
+
+        chat = self.sessions[client_id]
 
         try:
-            res = requests.post(self.url, headers=headers, json=payload, timeout=10)
-            res.raise_for_status()
-            end_time = time.perf_counter()
-            latency = end_time - start_time
-            
-            print(f"--- Thời gian phản hồi: {latency:.2f} giây ---")
-            data = res.json()
-
-            # Cách lấy text an toàn hơn để tránh lỗi NoneType
-            candidates = data.get("candidates", [])
-            if not candidates:
-                return "Tôi chưa nghĩ ra câu trả lời, bạn thử lại nhé."
-
-            parts = candidates[0].get("content", {}).get("parts", [])
-            raw_text = parts[0].get("text", "") if parts else ""
-
-            return raw_text
-            
+            response = chat.send_message(prompt)
+            text = response.text.strip()
+            return text
         except Exception as e:
-            print(f"--- [LLM Error] {e} ---")
+            print(f"[Gemini SDK Error] {e}")
             return "Kết nối với trí tuệ nhân tạo đang gặp chút vấn đề."
         
 
@@ -78,7 +53,7 @@ class ASK_LLM:
             "prompt": (
                 "Hãy luôn luôn trả lời bằng tiếng Việt tự nhiên,trả lời ngắn ngọn 1 , 2 câu, không viết tắt, không emoji, không markdown.\n"
                 "Dưới đây là lịch sử cuộc trò chuyện để bạn nắm ngữ cảnh:\n"
-                f"{context}" # Chèn toàn bộ lịch sử vào đây
+                f"{context}" 
                 f"Người dùng: {prompt}\n"
                 "Trợ lý:"
             ),

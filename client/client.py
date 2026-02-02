@@ -45,6 +45,7 @@ def stt(audio_path):
         return None
 
 async def handle_text_io(websocket, text_input):
+    
     """Gửi text và phát âm thanh từ phản hồi"""
     try:
         # 1. Gửi và nhận Text từ Chatbot

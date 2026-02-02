@@ -51,6 +51,7 @@ dependencies = [
     "pydantic-settings>=2.12.0",
     "scipy>=1.15.3",
     "vieneu",
+    "google-generativeai>=0.8.6",
 ]
 
 [project.urls]
