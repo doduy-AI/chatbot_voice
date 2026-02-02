@@ -5,16 +5,22 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 import speech_recognition as sr
 import time
-import queue
-import json
+import pyaudio
+import requests
+from urllib.parse import quote
 
-# ====== CẤU HÌNH ======
+# ====== KHỞI TẠO CẤU HÌNH (Chỉ làm 1 lần) ======
 SAMPLE_RATE_TTS = 24000  
 REC_SAMPLE_RATE = 44100
 DURATION = 5
 TTS_URI = "ws://localhost:6789/api/v1/tts/ws/doduy001"
+STREAM_URL = "http://192.168.1.35:8001/stream"
 
-# ====== STT (Speech to Text) ======
+# Khởi tạo PyAudio ở Global để dùng chung cho toàn bộ chương trình
+p = pyaudio.PyAudio()
+stream_player = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE_TTS, output=True)
+
+# --- Các hàm STT giữ nguyên ---
 def record_audio(duration=DURATION, fs=REC_SAMPLE_RATE, filename="input.wav"):
     print(f"\n🎤 Ghi âm {duration}s... (Mời bạn nói)")
     try:    
@@ -38,56 +44,69 @@ def stt(audio_path):
         print("❓ Không nghe rõ...")
         return None
 
-import asyncio
-import websockets
-import speech_recognition as sr
-import sounddevice as sd
-from scipy.io.wavfile import write
-
-# ====== CẤU HÌNH ======
-TTS_URI = "ws://localhost:6789/api/v1/tts/ws/doduy001"
-
-# --- Giữ nguyên các hàm record_audio và stt của Duy ---
-
 async def handle_text_io(websocket, text_input):
-    """Gửi 1 text và nhận lại 1 text từ Server"""
+    """Gửi text và phát âm thanh từ phản hồi"""
     try:
-        # 1. Gửi text lên server
+        # 1. Gửi và nhận Text từ Chatbot
         await websocket.send(text_input)
-        print(f"🚀 Đã gửi: {text_input}")
+        print(f"🚀 Gửi: {text_input}")
 
-        # 2. Đợi nhận đúng 1 phản hồi text từ server
         response = await websocket.recv()
         
         if isinstance(response, str):
-            print(f"🤖 Robot phản hồi: {response}")
-            # Sau khi có text này, Duy có thể ném nó vào hàm phát âm thanh HTTP của Duy
-            # await play_audio_from_http(response) 
+            print(f"🤖 Robot: {response}")
+            
+            # 2. Gọi API Stream âm thanh
+            url = f"{STREAM_URL}?text={quote(response)}"
+            start_time = time.perf_counter()
+            first_chunk = True 
+            
+            try:
+                with requests.get(url, stream=True, timeout=20) as r:
+                    r.raise_for_status() 
+                    for chunk in r.iter_content(chunk_size=2048): 
+                        if chunk:
+                            if first_chunk:
+                                latency = time.perf_counter() - start_time
+                                print(f"✅ Phát tiếng sau: {latency:.2f}s")
+                                # CHỈ PHÁT PHẦN SAU HEADER
+                                stream_player.write(chunk[44:]) 
+                                first_chunk = False
+                            else:
+                                stream_player.write(chunk)
+
+            except Exception as e:
+                print(f"Lỗi stream âm thanh: {e}")
+            
+            print("--- Kết thúc nói ---")
+
         else:
-            print(" Cảnh báo: Server trả về dữ liệu binary nhưng logic đang đợi text.")
+            print("⚠️ Cảnh báo: Nhận dữ liệu Binary không mong muốn.")
 
     except Exception as e:
-        print(f" Lỗi khi trao đổi dữ liệu: {e}")
+        print(f"❌ Lỗi trao đổi: {e}")
 
 async def voice_loop():
-    print("🤖 Robot sẵn sàng (Chế độ Text IO)!")
+    print("🤖 Robot sẵn sàng (No-Pop Mode)!")
     try:
         async with websockets.connect(TTS_URI) as websocket:
-            print(f" Đã kết nối tới {TTS_URI}")
+            print(f"🔗 Đã nối ống tới {TTS_URI}")
             while True:
-                # 1. Thu âm & Chuyển thành văn bản
                 filename = record_audio()
                 if not filename: continue
                 
                 text_input = stt(filename)
                 if not text_input: continue
                 
-                # 2. Gửi và Nhận phản hồi
                 await handle_text_io(websocket, text_input)
-
                 await asyncio.sleep(0.5)
     except Exception as e:
-        print(f" Lỗi kết nối: {e}")
+        print(f"❌ Lỗi kết nối: {e}")
+    finally:
+        # CHỈ ĐÓNG KHI TẮT HẲN CHƯƠNG TRÌNH
+        stream_player.stop_stream()
+        stream_player.close()
+        p.terminate()
 
 if __name__ == "__main__":
     asyncio.run(voice_loop())
