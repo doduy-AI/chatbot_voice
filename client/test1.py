@@ -78,7 +78,7 @@ async def start_voice_session():
                             print("🏁 Xong câu này.\n---")
                             break
                         else:
-                            print(f"💬 Nội dung server: {response}") # <--- Dòng này sẽ hiện Text
+                            print(f"💬 Nội dung server: {response}") 
                     else:
                         # Nếu nhận được bytes thì báo số lượng
                         print(f"📦 Nhận chunk binary: {len(response)} bytes")

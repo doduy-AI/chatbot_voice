@@ -2,6 +2,7 @@ from core.config import settings
 import requests
 import json
 import re
+import time
 
 class ASK_LLM:
     def __init__(self):
@@ -27,14 +28,20 @@ class ASK_LLM:
             ],
             "generationConfig": {
                 "maxOutputTokens": 900,
-                "temperature": 0.7, # Để 0.3 cho giọng văn tự nhiên hơn một chút so với 0.0
+                "temperature": 1, 
                 "topP": 0.9
             }
         }
+        latency = 0
+        start_time = time.perf_counter()
 
         try:
             res = requests.post(self.url, headers=headers, json=payload, timeout=10)
             res.raise_for_status()
+            end_time = time.perf_counter()
+            latency = end_time - start_time
+            
+            print(f"--- Thời gian phản hồi: {latency:.2f} giây ---")
             data = res.json()
 
             # Cách lấy text an toàn hơn để tránh lỗi NoneType
