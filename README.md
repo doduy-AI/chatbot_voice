@@ -13,3 +13,7 @@ git clone https://github.com/xiph/rnnoise
 make
 
 sưar lại đường dẫn trong file client trỏ đến file .so vừa mới build được 
+
+
+
+Liên hệ : dev.dinhduy@gmail.com 
