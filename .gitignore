@@ -76,3 +76,4 @@ kaggle.json
 .env.*
 !.env.example
 .env
+**/rnnoise/**

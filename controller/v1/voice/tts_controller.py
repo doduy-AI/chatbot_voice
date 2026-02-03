@@ -19,7 +19,7 @@ class TTSController:
         except WebSocketDisconnect:
             print(f"--- [Server] {client_id} đã ngắt kết nối ---")
             llm_gateway.clear_session(client_id)
-        except Exception as e:
+        except Exception as e:  
             print(f"--- [Server] Lỗi kết nối tổng quát: {e}")
 
 tts_controller = TTSController()

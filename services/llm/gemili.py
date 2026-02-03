@@ -10,7 +10,7 @@ class ASK_LLM:
         genai.configure(api_key=settings.API_GEMINI)
         self.sessions = {}  
         self.model = genai.GenerativeModel("gemini-2.5-flash")
-        
+
     def GEMINI(self, client_id, prompt):
         # Nếu client chưa có session → tạo mới
         if client_id not in self.sessions:
@@ -18,13 +18,11 @@ class ASK_LLM:
                 history=[
                     {
                         "role": "user",
-                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt ngắn gọn (1–2 câu)."
+                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt ngắn gọn (1–2 câu)"
                     }
                 ]
             )
-
         chat = self.sessions[client_id]
-
         try:
             response = chat.send_message(prompt)
             text = response.text.strip()

@@ -52,6 +52,11 @@ dependencies = [
     "scipy>=1.15.3",
     "vieneu",
     "google-generativeai>=0.8.6",
+    "sounddevice>=0.5.5",
+    "speechrecognition>=3.14.5",
+    "pyaudio>=0.2.14",
+    "av>=16.1.0",
+    "torchcrepe>=0.0.24",
 ]
 
 [project.urls]

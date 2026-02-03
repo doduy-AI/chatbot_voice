@@ -7,7 +7,7 @@ from urllib.parse import quote # Thêm cái này để xử lý tiếng Việt t
 p = pyaudio.PyAudio()
 stream_player = p.open(format=pyaudio.paInt16, channels=1, rate=24000, output=True)
 
-text = "Một ông chủ nuôi con chó rất thông minh. Một hôm ông khoe với hàng xóm rằng con chó của mình biết đếm đến ba. Người hàng xóm không tin, liền bảo: “Thế cho tôi xem thử đi.” Ông chủ quay sang con chó và nói: “Này, ba cộng một bằng mấy?” Con chó lập tức sủa ba tiếng rồi im. Người hàng xóm ngạc nhiên hỏi: “Ơ, sao nó không sủa bốn tiếng?” Ông chủ cười và đáp: “À, vì nó chỉ biết đếm đến ba thôi."
+text = "Hi there! My name is Duy, and today I’m testing my AI voice system. I want to see how natural and expressive this voice can sound, especially when I speak with different emotions — like excitement, curiosity, or calmness. So, let’s take a deep breath and begin this test together."
 
 # MÃ HÓA TEXT ĐỂ CHÈN VÀO URL
 url = f"http://192.168.1.35:8001/stream?text={quote(text)}"
