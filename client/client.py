@@ -34,29 +34,30 @@ REC_SAMPLE_RATE = 44100
 DURATION = 5
 TTS_URI = "ws://192.168.1.6:6789/api/v1/tts/ws/doduy001"
 STREAM_URL = "http://192.168.1.35:8001/stream"
+
 HELLO_MESSAGES = [
-    "Chào bạn nha! Emily đã lên sóng, mình giúp gì được cho bạn đây?",
-    "Hí! Emily đây, hôm nay bạn có chuyện gì vui không? Cần mình hỗ trợ gì nói nhé!",
-    "Chào bạn nhé, Emily sẵn sàng nghe bạn 'sai bảo' rồi đây!",
-    "Hello! Rất vui được gặp lại bạn, mình cùng bắt đầu thôi nào.",
-    "Emily có mặt! Bạn cần mình tư vấn hay giúp đỡ việc gì không nhỉ?",
+    "Chào bạn nha! tớ đã lên sóng, mình giúp gì được cho bạn đây?",
+    "Hí! tớ đây, hôm nay bạn có chuyện gì vui không? Cần mình hỗ trợ gì nói nhé!",
+    "Chào bạn nhé, tớ sẵn sàng nghe bạn 'sai bảo' rồi đây!",
+    "Hê Nhô! Rất vui được gặp lại bạn, mình cùng bắt đầu thôi nào.",
+    "tớ có mặt! Bạn cần mình tư vấn hay giúp đỡ việc gì không nhỉ?",
     "Chào bạn nha, mình đang lắng nghe đây, cứ nói thoải mái nhé!",
-    "Ting ting! Emily đã sẵn sàng, bạn muốn hỏi gì mình cũng được nè.",
-    "Hey! Hôm nay của bạn thế nào? Cần Emily giúp một tay không?",
+    "Ting ting! tớ đã sẵn sàng, bạn muốn hỏi gì mình cũng được nè.",
+    "Hêy ! Hôm nay của bạn thế nào? Cần tớ giúp một tay không?",
     "Chào bạn, mình chờ nãy giờ luôn á! Cùng làm việc thôi nào.",
-    "Chào bạn nhé! Emily rất hân hạnh được đồng hành cùng bạn hôm nay."
+    "Chào bạn nhé! tớ rất hân hạnh được đồng hành cùng bạn hôm nay."
 ]
 
 FEEDBACK_MESSAGE = [
     "Ơ kìa, mình chưa nghe rõ bạn nói gì hết, bạn nói lại lần nữa được không?",
     "Hình như chỗ bạn hơi ồn hoặc micro có vấn đề rồi, mình không nghe thấy gì cả.",
     "Bạn ơi, bạn còn đó không? Nói gì đó với mình đi cho đỡ buồn nè!",
-    "Emily chưa nghe rõ lắm, bạn nói chậm lại một chút với mình nha.",
-    "Có vẻ bạn đang bận gì à? Khi nào cần thì cứ gọi Emily nhé!",
+    "Tớ  chưa nghe rõ lắm, bạn nói chậm lại một chút với mình nha.",
+    "Có vẻ bạn đang bận gì à? Khi nào cần thì cứ gọi tớ nhé!",
     "Mình vẫn đang đợi bạn nè, có chuyện gì cần mình giải đáp không?"
 ]
 
-GOODBYE_MESSAGE = "Hẹn gặp lại bạn sớm nha, Emily luôn ở đây chờ bạn đó. Tạm biệt!"
+GOODBYE_MESSAGE = "Hẹn gặp lại bạn sớm nha, tớ luôn ở đây chờ bạn đó. Tạm biệt!"
 # Khởi tạo PyAudio ở Global để dùng chung cho toàn bộ chương trình
 p = pyaudio.PyAudio()
 stream_player = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE_TTS, output=True)
