@@ -5,23 +5,27 @@ import json
 import re
 import time
 
+
+
 class ASK_LLM:
     def __init__(self):
         genai.configure(api_key=settings.API_GEMINI)
         self.sessions = {}  
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
-
+        self.model = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            generation_config={
+                "max_output_tokens":1000,
+                "temperature":1,
+                "top_p":0.95           
+            }
+            )
     def GEMINI(self, client_id, prompt):
         # Nếu client chưa có session → tạo mới
         if client_id not in self.sessions:
-            self.sessions[client_id] = self.model.start_chat(
-                history=[
-                    {
+            self.sessions[client_id] = self.model.start_chat(history=[ {
                         "role": "user",
-                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt ngắn gọn (1–2 câu)"
-                    }
-                ]
-            )
+                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt,không viết tắt KHÔNG dùng Markdown (không dấu sao, không in đậm, không gạch đầu dòng, số thì viết bằng chữ ,đơn vị VND thì là việt nam đồng , USD thì là đô la v.v , không viết tắt 5g -> năm gờ , tiếng anh facebook thì thành phây book các từ khác tương tự"
+                    }])
         chat = self.sessions[client_id]
         try:
             response = chat.send_message(prompt)

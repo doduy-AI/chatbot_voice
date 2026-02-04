@@ -90,7 +90,7 @@ to_16k = samplerate.Resampler("sinc_fastest", channels=1)
 
 # -------- Main --------
 def record():
-    # print("🎙️  Hệ thống sẵn sàng...")
+    # print("  Hệ thống sẵn sàng...")
     silero_model.reset_states()
 
     frames = []
@@ -162,28 +162,28 @@ def record():
                 if not had_voice:
                     had_voice = True
                     first_voice_time = now
-                print(f"🗣️  VOICE  prob={prob:.2f}", end="\r")
+                print(f"  VOICE  prob={prob:.2f}", end="\r")
             else:
-                print(f"🔇  NOISE  prob={prob:.2f}", end="\r")
+                print(f"  NOISE  prob={prob:.2f}", end="\r")
 
             # ---- warn: no voice ----
             if not had_voice and not no_voice_warned and (now - start_time > NO_VOICE_TIMEOUT):
-                # print("\n🤖  Xin lỗi, bạn có cần tôi giúp gì không?")
+                # print("\n  Xin lỗi, bạn có cần tôi giúp gì không?")
                 no_voice_warned = True
                 return "__NO_VOICE__"
 
             # ---- stop: silence ----
             if had_voice and (now - last_voice > SILENCE_TIMEOUT):
-                print("\n⏹️  Im lặng 2s → dừng")
+                print("\n⏹  Im lặng 2s → dừng")
                 break
 
             # ---- stop: max talk ----
             if had_voice and (now - first_voice_time > MAX_RECORD_TIME):
-                print("\n⏹️  Đã nói đủ 15s → dừng")
+                print("\n⏹  Đã nói đủ 15s → dừng")
                 break
 
     if not had_voice:
-        # print("🚫  Không phát hiện giọng người → không lưu file")
+        # print("  Không phát hiện giọng người → không lưu file")
         return None
 
     with wave.open(OUTPUT_WAV, "wb") as wf:
@@ -192,7 +192,7 @@ def record():
         wf.setframerate(INPUT_SR)
         wf.writeframes(b"".join(frames))
 
-    # print(f"✅ Đã lưu file: {OUTPUT_WAV}")
+    # print(f" Đã lưu file: {OUTPUT_WAV}")
     return OUTPUT_WAV
 
 # if __name__ == "__main__":

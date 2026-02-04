@@ -11,6 +11,7 @@ import time, datetime, random
 from urllib.parse import quote
 from STT import record, OUTPUT_WAV
 import termios, sys, atexit
+import aiohttp
 
 # Hàm ẩn echo Ctrl+C trên terminal
 def disable_ctrl_c_echo():
@@ -38,7 +39,6 @@ STREAM_URL = "http://192.168.1.35:8001/stream"
 HELLO_MESSAGES = [
     "Chào bạn nha! tớ đã lên sóng, mình giúp gì được cho bạn đây?",
     "Hí! tớ đây, hôm nay bạn có chuyện gì vui không? Cần mình hỗ trợ gì nói nhé!",
-    "Chào bạn nhé, tớ sẵn sàng nghe bạn 'sai bảo' rồi đây!",
     "Hê Nhô! Rất vui được gặp lại bạn, mình cùng bắt đầu thôi nào.",
     "tớ có mặt! Bạn cần mình tư vấn hay giúp đỡ việc gì không nhỉ?",
     "Chào bạn nha, mình đang lắng nghe đây, cứ nói thoải mái nhé!",
@@ -147,39 +147,43 @@ async def handle_text_io(websocket, text_input):
         print(f" Lỗi trao đổi: {e}")
 
 # Hàm setup robot nói bị động
-def robot_speak(text):
+async def robot_speak(text): # Chuyển thành async def
     print(f"Robot: {text}")
-
     url = f"{STREAM_URL}?text={quote(text)}"
-    start_time = time.perf_counter()
+    start_time = asyncio.get_event_loop().time()
     first_chunk = True
 
-    with requests.get(url, stream=True, timeout=20) as r:
-        r.raise_for_status()
-        for chunk in r.iter_content(chunk_size=2048):
-            if chunk:
-                if first_chunk:
-                    latency = time.perf_counter() - start_time
-                    stream_player.write(chunk[44:])  # bỏ header wav
-                    first_chunk = False
-                else:
-                    stream_player.write(chunk)
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=20) as r:
+                r.raise_for_status()
+                async for chunk in r.content.iter_chunked(2048):
+                    if chunk:
+                        if first_chunk:
+                            latency = asyncio.get_event_loop().time() - start_time
+                            print(latency)
+                            stream_player.write(chunk[44:])  
+                            first_chunk = False
+                        else:
+                            stream_player.write(chunk)
+                        await asyncio.sleep(0) 
 
-    print("--- Robot nói xong ---")
-
+        print("--- Robot nói xong ---")
+    except Exception as e:
+        print(f"Lỗi khi phát âm thanh: {e}")
 # Hàm vòng lặp chính
 async def voice_loop():
     print(" Robot sẵn sàng (No-Pop Mode)!")
     try:
         async with websockets.connect(TTS_URI) as websocket:
             print(f"Đã kết nối tới: {TTS_URI}")
-            robot_speak(random.choice(HELLO_MESSAGES))
+            await robot_speak(random.choice(HELLO_MESSAGES))
             while True:
                 filename = record()
 
                 # ===== KHÔNG CÓ GIỌNG =====
                 if filename == "__NO_VOICE__":
-                    robot_speak(random.choice(FEEDBACK_MESSAGE))
+                    await robot_speak(random.choice(FEEDBACK_MESSAGE))
                     await asyncio.sleep(1.0)
                     continue
 
@@ -193,7 +197,7 @@ async def voice_loop():
                 await asyncio.sleep(0.5)
 
     except KeyboardInterrupt:
-        robot_speak(GOODBYE_MESSAGE)
+        await robot_speak(GOODBYE_MESSAGE)
         time.sleep(0.5)
 
     except Exception as e:
