@@ -13,11 +13,10 @@ class TTSController:
                 text = await websocket.receive_text()
                 print(f"--- [Server] Nhận text từ {client_id}: {text}")
                 loop = asyncio.get_event_loop()
-                # ai_response = await loop.run_in_executor(None, llm_gateway.GEMINI ,client_id,text)
-                print("text nhận từ client ", text)
-                ai_response = "Nếu trong log thỉnh thoảng vẫn hiện lỗi coroutine was never awaited, đó là vì các đoạn text sau khi tách xong được đẩy vào hàm nói nhưng không có await."
-                textloc = split_and_label(ai_response)
-                print(textloc)
+                ai_response = await loop.run_in_executor(None, llm_gateway.GEMINI ,client_id,text)
+                print(split_and_label(ai_response))
+                print(f"---[AI Trả Về ] {ai_response}")
+                await tts_service.stream_audio(websocket, ai_response)
         except WebSocketDisconnect:
             print(f"--- [Server] {client_id} đã ngắt kết nối ---")
             llm_gateway.clear_session(client_id)

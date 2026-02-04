@@ -64,7 +64,7 @@ stream_player = p.open(format=pyaudio.paInt16, channels=1, rate=SAMPLE_RATE_TTS,
 
 
 
-def stt(audio_path):
+async def stt(audio_path):
     recognizer = sr.Recognizer()
     try:
         with sr.AudioFile(audio_path) as source:
@@ -73,7 +73,7 @@ def stt(audio_path):
             print(f"👤 Bạn nói: {text}")
             return text
     except Exception:
-        robot_speak("Xin lỗi, tôi không nghe rõ bạn nói gì.")
+        await robot_speak("Xin lỗi, tôi không nghe rõ bạn nói gì.")
         return None
 
 # Hàm kiểm tra và trả lời câu hỏi về thời gian
@@ -190,7 +190,7 @@ async def voice_loop():
                 if not filename:
                     continue
 
-                text_input = stt(filename)
+                text_input = await stt(filename)
                 if not text_input: continue
                 
                 await handle_text_io(websocket, text_input)
