@@ -17,7 +17,7 @@ class TTSService:
         print(f"🗣️ Bắt đầu TTS cho {client_id}: {full_text}")
 
         segments = split_and_label(full_text)
-        manager.send_personal_message("text sau khi gắn tab"+segments,client_id)
+        manager.send_personal_message(segments,client_id)
         audio_queue = asyncio.Queue()
 
         # ============================

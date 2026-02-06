@@ -105,6 +105,7 @@ async def handle_text_io(websocket, text_input):
         except asyncio.TimeoutError:
             pass 
         start_time = time.perf_counter()
+        first_chunk_logged = False
 
         await websocket.send(text_input)
         print(f" Bạn: {text_input}")
@@ -123,8 +124,10 @@ async def handle_text_io(websocket, text_input):
                     continue
 
             if isinstance(message, (bytes, bytearray)):
-                latency = time.perf_counter() - start_time
-                print(f"[Chunk âm thanh đầu tiên sau]: {latency:.2f}s")
+                if not first_chunk_logged:
+                    latency = time.perf_counter() - start_time
+                    print(f"[Chunk âm thanh đầu tiên sau]: {latency:.2f}s")
+                    first_chunk_logged=True
                 stream_player.write(message)
                 # print(f"🎧 Phát {len(message)} bytes...")
 
