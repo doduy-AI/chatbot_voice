@@ -95,35 +95,8 @@ async def time_answer(text):
 # Hàm xử lý trao đổi văn bản qua WebSocket
 async def handle_text_io(websocket, text_input):
     try:
-
-        # ===== ƯU TIÊN LOCAL TIME =====
-        # local_time = await time_answer(text_input)
-        # if local_time:
-        #     print(f"🤖 Robot: {local_time}")
-
-        #     url = f"{STREAM_URL}?text={quote(local_time)}"
-        #     start_time = time.perf_counter()
-        #     first_chunk = True
-
-        #     with requests.get(url, stream=True, timeout=20) as r:
-        #         r.raise_for_status()
-        #         for chunk in r.iter_content(chunk_size=2048):
-        #             if chunk:
-        #                 if first_chunk:
-        #                     latency = time.perf_counter() - start_time
-        #                     print(f"Phát tiếng sau: {latency:.2f}s")
-        #                     stream_player.write(chunk[44:])
-        #                     first_chunk = False
-        #                 else:
-        #                     stream_player.write(chunk)
-
-        #     return
-
         await websocket.send(text_input)
-
         response = await websocket.recv()
-        
-
         if isinstance(response, str):
             print(f" Robot: {response}")
 

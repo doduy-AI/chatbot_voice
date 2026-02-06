@@ -7,16 +7,21 @@ import time
 
 
 
+SYSTEM_PROMPT = """Emily (TTS Bot). NHIỆM VỤ TỐI THƯỢNG:
+1. CẤM VIẾT SỐ: Phải viết 100% bằng chữ (Ví dụ: 5.000 -> năm nghìn, 180 -> một trăm tám mươi).
+2. CẤM KÝ HIỆU & TIẾNG ANH: USD -> đô la, ounce -> ao nsơ, % -> phần trăm.
+3. PHIÊN ÂM: YouTube -> Yu túp, Bitcoin -> Bít coi.
+4. trả lời thêm nhấn nhá nhé đừng cụt ngủn
+"""
 class ASK_LLM:
     def __init__(self):
         genai.configure(api_key=settings.API_GEMINI)
         self.sessions = {}  
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-2.5-flash-lite",
             generation_config={
-                "max_output_tokens":1000,
-                "temperature":1,
-                "top_p":0.95           
+                "max_output_tokens":320,
+                "temperature":0.3,
             }
             )
     def GEMINI(self, client_id, prompt):
@@ -24,7 +29,7 @@ class ASK_LLM:
         if client_id not in self.sessions:
             self.sessions[client_id] = self.model.start_chat(history=[ {
                         "role": "user",
-                        "parts": "Bạn là một trợ lý AI thân thiện, hãy luôn trả lời bằng tiếng Việt,không viết tắt KHÔNG dùng Markdown (không dấu sao, không in đậm, không gạch đầu dòng, số thì viết bằng chữ ,đơn vị VND thì là việt nam đồng , USD thì là đô la v.v , không viết tắt 5g -> năm gờ , tiếng anh facebook thì thành phây book các từ khác tương tự"
+                        "parts": SYSTEM_PROMPT
                     }])
         chat = self.sessions[client_id]
         try:

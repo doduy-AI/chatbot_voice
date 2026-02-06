@@ -2,43 +2,89 @@ import asyncio
 import websockets
 import sounddevice as sd
 import numpy as np
+import json
+import wave
 
-TTS_URI = "ws://1.208.108.242:58536/api/v1/tts/ws/doduy001"
+TTS_URI = "ws://localhost:6789/api/v1/tts/ws/doduy001"
 
-async def receive_audio():
-    async with websockets.connect(TTS_URI) as websocket:
-        print("🔌 Đã kết nối tới server TTS.")
 
-        # Gửi câu test để server đọc
-        text = "Xin chào, mình là robot nói tiếng Việt! , bạn tên là gì bạn có muốn đấm nhau không "
-        await websocket.send(text)
-        print(f"📤 Đã gửi text: {text}\n")
+SAMPLE_RATE = 24000    
+CHANNELS = 1
+DTYPE = np.int16      
 
-        audio_buffer = bytearray()
-        while True:
-            data = await websocket.recv()
+OUTPUT_FILENAME = "/home/doduy/Documents/chatbot_voice/output_audio.wav"
 
-            # Nếu là tín hiệu kết thúc
-            if isinstance(data, str):
-                if data == "END_OF_STREAM":
-                    print("✅ Nhận xong toàn bộ âm thanh.")
-                    break
-                elif data == "ERROR":
-                    print("❌ Server báo lỗi.")
-                    break
-                else:
-                    print(f"📩 Tin nhắn từ server: {data}")
-            else:
-                # data là bytes PCM16
-                print(f"🎵 Nhận {len(data)} bytes âm thanh.")
-                audio_buffer.extend(data)
+async def tts_client(text: str):
+    print("🔌 Đang kết nối tới TTS server...")
+    async with websockets.connect(TTS_URI, max_size=None) as ws:
+        print("✅ Đã kết nối thành công!")
 
-        # Sau khi nhận đủ -> phát lại âm thanh
-        print(f"▶️ Tổng cộng nhận được {len(audio_buffer)} bytes, đang phát lại...")
-        audio_np = np.frombuffer(audio_buffer, dtype=np.int16)
-        sd.play(audio_np, samplerate=24000)
-        sd.wait()
-        print("🔚 Phát xong.")
+        # 1️⃣ Gửi text lên server
+        payload = json.dumps({"text": text}, ensure_ascii=False)
+        await ws.send(payload)
+        print(f"📤 Đã gửi text: {text}")
+        audio_data = []
 
+        # 2️⃣ Tạo stream âm thanh để phát realtime
+        stream = sd.RawOutputStream(
+            samplerate=SAMPLE_RATE,
+            channels=CHANNELS,
+            dtype=DTYPE,
+            blocksize=2048,
+        )
+        stream.start()
+
+        # 3️⃣ Nhận dữ liệu từ server
+        try:
+            while True:
+                message = await ws.recv()
+
+                # 📨 Nếu là JSON (sự kiện)
+                if isinstance(message, str):
+                    try:
+                        msg = json.loads(message)
+                        if msg.get("event") == "done":
+                            print("✅ Nhận xong âm thanh.")
+                            break
+                    except json.JSONDecodeError:
+                        print(f"[Server msg] {message}")
+                    continue
+
+                if isinstance(message, (bytes, bytearray)):
+                    if len(message) == 0:
+                        continue  # bỏ qua chunk rỗng
+
+                    # Ghi trực tiếp vào buffer âm thanh (realtime)
+                    stream.write(message)
+                    audio_data.append(message)
+                    print(f"🎧 Phát {len(message)} bytes...")
+
+        except websockets.ConnectionClosed:
+            print("⚠️ Kết nối WebSocket bị đóng.")
+        except Exception as e:
+            print(f"❌ Lỗi khi nhận dữ liệu: {e}")
+        finally:
+            stream.stop()
+            stream.close()
+            print("🔚 Đã dừng stream âm thanh.")
+
+        if audio_data:
+            print(f"\n💾 Đang ghi vào file: {OUTPUT_FILENAME}")
+            with wave.open(OUTPUT_FILENAME, 'wb') as wf:
+                wf.setnchannels(CHANNELS)
+                wf.setsampwidth(2) # 2 bytes cho 16-bit
+                wf.setframerate(SAMPLE_RATE)
+                wf.writeframes(b''.join(audio_data))
+            print("✨ Đã lưu file thành công!")
+        else:
+            print("⚠️ Không có dữ liệu âm thanh để lưu.")
+
+        print("🏁 Hoàn tất phiên TTS.")
+
+
+# ==========================
+# 🚀 Chạy thử
+# ==========================
+text = "hỏi tên trong tienegs anh thì hỏi ntn "
 if __name__ == "__main__":
-    asyncio.run(receive_audio())
+    asyncio.run(tts_client(text))

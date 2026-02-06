@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     API_GEMINI : str = "API_GEMINI"
     PROJECT_NAME : str = "PROJECT_NAME"
     URL_LLM : str = "URL_LLM"
+    URL_VI : str = "URL_VI"
+    URL_EN : str = "URL_EN"
     model_config = SettingsConfigDict(env_file=".env",env_file_encoding='utf-8')
 
 
