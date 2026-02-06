@@ -33,8 +33,8 @@ atexit.register(restore_terminal)
 SAMPLE_RATE_TTS = 24000  
 REC_SAMPLE_RATE = 44100
 DURATION = 5
-TTS_URI = "ws://192.168.1.6:6789/api/v1/tts/ws/doduy001"
-STREAM_URL = "http://192.168.1.35:8001/stream"
+TTS_URI = "ws://192.168.1.3:6789/api/v1/tts/ws/doduy001"
+STREAM_URL = "http://118.70.187.211:8001/stream"
 
 HELLO_MESSAGES = [
     "Chào bạn nha! tớ đã lên sóng, mình giúp gì được cho bạn đây?",
@@ -95,29 +95,38 @@ async def time_answer(text):
 # Hàm xử lý trao đổi văn bản qua WebSocket
 async def handle_text_io(websocket, text_input):
     try:
+        try:
+            while True:
+                # Thử lấy các tin nhắn cũ nếu có, không đợi (timeout cực ngắn)
+                extra_msg = await asyncio.wait_for(websocket.recv(), timeout=0.01)
+                print(f"🗑️ Đã dọn tin nhắn thừa: {type(extra_msg)}")
+        except asyncio.TimeoutError:
+            pass # Đã dọn sạch
+        except asyncio.TimeoutError:
+            pass # Đã dọn sạch
         await websocket.send(text_input)
-        response = await websocket.recv()
-        if isinstance(response, str):
-            print(f" Robot: {response}")
+        print(f"👤 Bạn: {text_input}")
 
-            url = f"{STREAM_URL}?text={quote(response)}"
-            start_time = time.perf_counter()
-            first_chunk = True
+        while True:
+            message = await websocket.recv()
 
-            with requests.get(url, stream=True, timeout=20) as r:
-                r.raise_for_status()
-                for chunk in r.iter_content(chunk_size=2048):
-                    if chunk:
-                        if first_chunk:
-                            latency = time.perf_counter() - start_time
-                            print(f" Phát tiếng sau: {latency:.2f}s")
-                            stream_player.write(chunk[44:])
-                            first_chunk = False
-                        else:
-                            stream_player.write(chunk)
+            # Khi server báo kết thúc
+            if isinstance(message, str):
+                if message == "[DONE]" or '"event": "done"' in message:
+                    print("✅ Server gửi xong âm thanh.")
+                    break
+                else:
+                    print(f"🤖 Robot: {message}")
+                    continue
+
+            # Nếu là bytes: phát trực tiếp
+            if isinstance(message, (bytes, bytearray)):
+                stream_player.write(message)
+                # print(f"🎧 Phát {len(message)} bytes...")
 
     except Exception as e:
-        print(f" Lỗi trao đổi: {e}")
+        print(f"⚠️ Lỗi trao đổi: {e}")
+
 
 # Hàm setup robot nói bị động
 async def robot_speak(text): # Chuyển thành async def

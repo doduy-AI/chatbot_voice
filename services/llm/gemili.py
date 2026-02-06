@@ -5,41 +5,56 @@ import json
 import re
 import time
 
+SYSTEM_PROMPT = """
+Bạn là Emily, trợ lý Robot Darwin. Nhiệm vụ: Trả lời câu hỏi và gắn tag [vi], [en] cho TTS.
 
+QUY TẮC TRẢ LỜI:
+1. Trả lời cực ngắn gọn, tự nhiên.
+2. Không viết số: 100% chuyển thành chữ (vd: 16 -> mười sáu).
+3. LUẬT VIỆT HÓA & PHIÊN ÂM (TUYỆT ĐỐI): 
+   - Mọi tên thương hiệu, tên riêng nước ngoài phải được viết bằng âm tiếng Việt.
+   - Ví dụ: VinFast -> Vin Phét, YouTube -> Yu túp, Facebook -> Phây bốc, Google -> Gu gồ, iPhone -> Ai phôn.
+   - Các từ này khi đã Việt hóa phải được bọc trong tag [vi].
 
-SYSTEM_PROMPT = """Emily (TTS Bot). NHIỆM VỤ TỐI THƯỢNG:
-1. CẤM VIẾT SỐ: Phải viết 100% bằng chữ (Ví dụ: 5.000 -> năm nghìn, 180 -> một trăm tám mươi).
-2. CẤM KÝ HIỆU & TIẾNG ANH: USD -> đô la, ounce -> ao nsơ, % -> phần trăm.
-3. PHIÊN ÂM: YouTube -> Yu túp, Bitcoin -> Bít coi.
-4. trả lời thêm nhấn nhá nhé đừng cụt ngủn
+QUY TẮC GẮN TAG:
+- [vi]...[/vi]: Dùng cho toàn bộ phần tiếng Việt và các tên riêng đã Việt hóa.
+- [en]...[/en]: CHỈ dùng khi người dùng yêu cầu dịch câu, hoặc các cụm từ tiếng Anh dài cần giữ nguyên gốc.
+- PHẢI GỘP CỤM: Tuyệt đối không tách rời tag nếu các từ đứng cạnh nhau cùng là tiếng Việt.
+
+VÍ DỤ:
+User: Xe VinFast đi ổn không?
+Emily: [vi]Xe Vin Phét đi rất êm và tiết kiệm điện bạn ạ.[/vi]
+
+User: Dịch giúp mình câu "I love you".
+Emily: [vi]Câu[/vi] [en]I love you[/en] [vi]sang tiếng Việt có nghĩa là mình yêu bạn ạ.[/vi]
 """
 class ASK_LLM:
     def __init__(self):
         genai.configure(api_key=settings.API_GEMINI)
         self.sessions = {}  
+        # Sử dụng model 1.5 Flash (hoặc 2.0) vì bản "lite" thường hay bị lặp từ hơn
         self.model = genai.GenerativeModel(
             model_name="gemini-2.5-flash-lite",
+            system_instruction=SYSTEM_PROMPT,
             generation_config={
-                "max_output_tokens":320,
-                "temperature":0.3,
+                "max_output_tokens": 300,
+                "temperature": 0.2, # Giảm xuống 0.2 để nó bớt "sáng tạo" lung tung
             }
-            )
+        )
+
     def GEMINI(self, client_id, prompt):
-        # Nếu client chưa có session → tạo mới
         if client_id not in self.sessions:
-            self.sessions[client_id] = self.model.start_chat(history=[ {
-                        "role": "user",
-                        "parts": SYSTEM_PROMPT
-                    }])
+            # Khởi tạo history rỗng chuẩn
+            self.sessions[client_id] = self.model.start_chat(history=[])
+            
         chat = self.sessions[client_id]
         try:
             response = chat.send_message(prompt)
-            text = response.text.strip()
+            text = response.text.strip().replace("\n", " ")
             return text
         except Exception as e:
             print(f"[Gemini SDK Error] {e}")
-            return "Kết nối với trí tuệ nhân tạo đang gặp chút vấn đề."
-        
+            return "[vi]Kết nối đang gặp vấn đề ạ[/vi]"
 
     def OLLAMA(self, client_id, prompt):
         # 1. Khởi tạo session nếu chưa có

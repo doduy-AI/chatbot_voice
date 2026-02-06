@@ -47,7 +47,7 @@ class TTSService:
                                             sr = wf.getframerate()
                                             ch = wf.getnchannels()
                                             bit = wf.getsampwidth() * 8
-                                            print(f"🔍 [{lang}] WAV Info: {sr} Hz | {ch} ch | {bit}-bit")
+                                            # print(f"🔍 [{lang}] WAV Info: {sr} Hz | {ch} ch | {bit}-bit")
                                     except Exception as e:
                                         print(f"⚠️ [{lang}] Không đọc được header WAV: {e}")
 
@@ -79,7 +79,7 @@ class TTSService:
                 if not data:
                     continue
 
-                print(f"📦 [{lang}] Nhận được: {len(data)} bytes")
+                # print(f"📦 [{lang}] Nhận được: {len(data)} bytes")
                 try:
                     # Gửi dữ liệu tới đúng client
                     await manager.send_audio_to_client(data, client_id)
