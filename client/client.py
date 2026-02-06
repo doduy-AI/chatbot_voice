@@ -99,28 +99,32 @@ async def handle_text_io(websocket, text_input):
             while True:
                 # Thử lấy các tin nhắn cũ nếu có, không đợi (timeout cực ngắn)
                 extra_msg = await asyncio.wait_for(websocket.recv(), timeout=0.01)
-                print(f"🗑️ Đã dọn tin nhắn thừa: {type(extra_msg)}")
+                print(f" Đã dọn tin nhắn thừa: {type(extra_msg)}")
         except asyncio.TimeoutError:
-            pass # Đã dọn sạch
+            pass 
         except asyncio.TimeoutError:
-            pass # Đã dọn sạch
+            pass 
+        start_time = time.perf_counter()
+
         await websocket.send(text_input)
-        print(f"👤 Bạn: {text_input}")
+        print(f" Bạn: {text_input}")
 
         while True:
             message = await websocket.recv()
 
             # Khi server báo kết thúc
             if isinstance(message, str):
+                print(message)
                 if message == "[DONE]" or '"event": "done"' in message:
-                    print("✅ Server gửi xong âm thanh.")
+                    print("[Server gửi xong âm thanh.]")
                     break
                 else:
-                    print(f"🤖 Robot: {message}")
+                    print(f" Robot: {message}")
                     continue
 
-            # Nếu là bytes: phát trực tiếp
             if isinstance(message, (bytes, bytearray)):
+                latency = time.perf_counter() - start_time
+                print(f"[Chunk âm thanh đầu tiên sau]: {latency:.2f}s")
                 stream_player.write(message)
                 # print(f"🎧 Phát {len(message)} bytes...")
 
@@ -143,7 +147,7 @@ async def robot_speak(text): # Chuyển thành async def
                     if chunk:
                         if first_chunk:
                             latency = asyncio.get_event_loop().time() - start_time
-                            print(latency)
+                            print("TIME để chạy có âm thanh",latency)
                             stream_player.write(chunk[44:])  
                             first_chunk = False
                         else:
