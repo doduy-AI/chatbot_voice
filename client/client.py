@@ -33,7 +33,7 @@ atexit.register(restore_terminal)
 SAMPLE_RATE_TTS = 24000  
 REC_SAMPLE_RATE = 44100
 DURATION = 5
-TTS_URI = "ws://192.168.1.3:6789/api/v1/tts/ws/doduy001"
+TTS_URI = "ws://localhost:6789/api/v1/tts/ws/doduy001"
 STREAM_URL = "http://118.70.187.211:8001/stream"
 
 HELLO_MESSAGES = [
@@ -117,7 +117,9 @@ async def handle_text_io(websocket, text_input):
             if isinstance(message, str):
                 print(message)
                 if message == "[DONE]" or '"event": "done"' in message:
-                    print("[Server gửi xong âm thanh.]")
+                    while stream_player.get_write_available() < stream_player._frames_per_buffer:
+                        await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.3) 
                     break
                 else:
                     print(f" Robot: {message}")
