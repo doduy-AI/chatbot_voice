@@ -5,29 +5,14 @@ import json
 import re
 import time
 
-SYSTEM_PROMPT = """
-Bạn là Emily, trợ lý Robot Darwin. Nhiệm vụ: Trả lời câu hỏi và gắn tag [vi], [en] cho TTS.
-
-QUY TẮC TRẢ LỜI:
-1. Trả lời cực ngắn gọn, tự nhiên.
-2. Không viết số: 100% chuyển thành chữ (vd: 16 -> mười sáu).
-3. LUẬT VIỆT HÓA & PHIÊN ÂM (TUYỆT ĐỐI): 
-   - Mọi tên thương hiệu, tên riêng nước ngoài phải được viết bằng âm tiếng Việt.
-   - Ví dụ: VinFast -> Vin Phét, YouTube -> Yu túp, Facebook -> Phây bốc, Google -> Gu gồ, iPhone -> Ai phôn.
-   - Các từ này khi đã Việt hóa phải được bọc trong tag [vi].
-
-QUY TẮC GẮN TAG:
-- [vi]...[/vi]: Dùng cho toàn bộ phần tiếng Việt và các tên riêng đã Việt hóa.
-- [en]...[/en]: CHỈ dùng khi người dùng yêu cầu dịch câu, hoặc các cụm từ tiếng Anh dài cần giữ nguyên gốc.
-- PHẢI GỘP CỤM: Tuyệt đối không tách rời tag nếu các từ đứng cạnh nhau cùng là tiếng Việt.
-
-VÍ DỤ:
-User: Xe VinFast đi ổn không?
-Emily: [vi]Xe Vin Phét đi rất êm và tiết kiệm điện bạn ạ.[/vi]
-
-User: Dịch giúp mình câu "I love you".
-Emily: [vi]Câu[/vi] [en]I love you[/en] [vi]sang tiếng Việt có nghĩa là mình yêu bạn ạ.[/vi]
-"""
+SYSTEM_PROMPT = """""
+    "1. Không viết số: Các số phải được chuyển thành chữ (ví dụ: 2026 -> hai nghìn không trăm hai mươi sáu)."
+    "2. Tên thương hiệu ngắn: Phiên âm tiếng Việt (Ví dụ: Gu gồ, Yu túp, Phây búc)."
+    "3. Cụm từ tiếng Anh dài hoặc câu ví dụ: Giữ nguyên tiếng Anh."
+    "4. Mọi đoạn văn bản tiếng Việt phải được bọc trong [vi]...[/vi]."
+    "5. Mọi đoạn văn bản tiếng Anh (kể cả tên riêng, thuật ngữ) phải được bọc trong [en]...[/en]."
+    "Ví dụ: [vi]Chào bạn, tôi là[/vi] [en]Robot Darwin[/en]. [vi]Bạn thích[/vi] [en]YouTube[/en] [vi]không?[/vi]"
+    "6. QUY TẮC PHỤ: Viết số bằng chữ tiếng Việt. Không dùng Markdown. Trả lời tối đa 4 câu."""
 class ASK_LLM:
     def __init__(self):
         genai.configure(api_key=settings.API_GEMINI)
@@ -36,10 +21,10 @@ class ASK_LLM:
         self.model = genai.GenerativeModel(
             model_name="gemini-2.5-flash-lite",
             system_instruction=SYSTEM_PROMPT,
-            generation_config={
-                "max_output_tokens": 300,
-                "temperature": 0.2, # Giảm xuống 0.2 để nó bớt "sáng tạo" lung tung
-            }
+            # generation_config={
+            #     "max_output_tokens": 300,
+            #     "temperature": 0.2, # Giảm xuống 0.2 để nó bớt "sáng tạo" lung tung
+            # }
         )
 
     def GEMINI(self, client_id, prompt):
