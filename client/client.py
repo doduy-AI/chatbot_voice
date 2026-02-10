@@ -12,6 +12,26 @@ from urllib.parse import quote
 from STT import record, OUTPUT_WAV
 import termios, sys, atexit
 import aiohttp
+import threading
+import sys
+import select
+
+paused = False
+
+
+def keyboard_listener():
+    global paused
+    print("Nhấn 'q' để Pause/Resume thu âm")
+
+    while True:
+        if select.select([sys.stdin], [], [], 0.1)[0]:
+            key = sys.stdin.read(1)
+            if key.lower() == 'q':
+                paused = not paused
+                if paused:
+                    print("\n⏸ Đã tạm dừng thu âm")
+                else:
+                    print("\n▶ Tiếp tục thu âm")
 
 # Hàm ẩn echo Ctrl+C trên terminal
 def disable_ctrl_c_echo():
@@ -33,8 +53,8 @@ atexit.register(restore_terminal)
 SAMPLE_RATE_TTS = 24000  
 REC_SAMPLE_RATE = 44100
 DURATION = 5
-TTS_URI = "ws://localhost:6789/api/v1/tts/ws/doduy001"
-STREAM_URL = "http://118.70.187.211:8001/stream"
+TTS_URI = "ws://192.168.1.5:6789/api/v1/tts/ws/doduy001"
+STREAM_URL = "http://192.168.1.35:8002/stream"
 
 HELLO_MESSAGES = [
     "Chào bạn nha! tớ đã lên sóng, mình giúp gì được cho bạn đây?",
@@ -165,11 +185,17 @@ async def robot_speak(text): # Chuyển thành async def
 # Hàm vòng lặp chính
 async def voice_loop():
     print(" Robot sẵn sàng (No-Pop Mode)!")
+    # chạy keyboard listener ở background
+    threading.Thread(target=keyboard_listener, daemon=True).start()
+
     try:
         async with websockets.connect(TTS_URI) as websocket:
             print(f"Đã kết nối tới: {TTS_URI}")
             await robot_speak(random.choice(HELLO_MESSAGES))
             while True:
+                if paused:
+                    await asyncio.sleep(0.2)
+                    continue
                 filename = record()
 
                 # ===== KHÔNG CÓ GIỌNG =====

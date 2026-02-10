@@ -59,6 +59,7 @@ dependencies = [
     "torchcrepe>=0.0.24",
     "langid>=1.1.6",
     "fasttext>=0.9.3",
+    "google-genai>=1.62.0",
 ]
 
 [project.urls]

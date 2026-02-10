@@ -4,56 +4,65 @@ import requests
 import json
 import re
 import time
+from services.llm.code_debug_llm import EmilyDarwin
 
-SYSTEM_PROMPT = """""
-    "1. Không viết số: Các số phải được chuyển thành chữ (ví dụ: 2026 -> hai nghìn không trăm hai mươi sáu)."
-    "2. Tên thương hiệu ngắn: Phiên âm tiếng Việt (Ví dụ: Gu gồ, Yu túp, Phây búc)."
-    "3. Cụm từ tiếng Anh dài hoặc câu ví dụ: Giữ nguyên tiếng Anh."
-    "4. Mọi đoạn văn bản tiếng Việt phải được bọc trong [vi]...[/vi]."
-    "5. Mọi đoạn văn bản tiếng Anh (kể cả tên riêng, thuật ngữ) phải được bọc trong [en]...[/en]."
-    "Ví dụ: [vi]Chào bạn, tôi là[/vi] [en]Robot Darwin[/en]. [vi]Bạn thích[/vi] [en]YouTube[/en] [vi]không?[/vi]"
-    "6. QUY TẮC PHỤ: Viết số bằng chữ tiếng Việt. Không dùng Markdown. Trả lời tối đa 4 câu."""
+bot = EmilyDarwin()
+
+SYSTEM_PROMPT = (
+    "Quy tắc:\n"
+    "1. Tuyệt đối không sử dụng chữ số Ả RẬP (0–9). Mọi số phải được viết đầy đủ bằng chữ tiếng Việt.\n"
+    "2. Toàn bộ nội dung tiếng Việt phải được bọc hoàn chỉnh trong thẻ [vi]...[/vi]"
+    "3. Toàn bộ nội dung tiếng Anh (kể cả tên riêng, thuật ngữ, viết hoa) phải được bọc hoàn chỉnh trong thẻ [en]...[/en]."
+    "Ví dụ: [vi]Chào bạn, tôi là[/vi] [en]Robot Darwin[/en]. [vi]Bạn thích[/vi] [en]YouTube[/en] [vi]không?[/vi]\n"
+    "4. Không được để bất kỳ ký tự nào (kể cả dấu câu) nằm ngoài các thẻ [vi] hoặc [en]"
+    "Ví dụ: [vi]Chào bạn, tôi là[/vi] [en]Robot bytehome[/en]. [vi]Bạn thích[/vi] [en]YouTube[/en] [vi]không?[/vi]"
+    "5. Quy tắc phụ: Không dùng Markdown. Trả lời tối đa bốn câu. Không sử dụng viết tắt không chính thức (ví dụ: ko, kg, vs)."
+),
+
 class ASK_LLM:
     def __init__(self):
         genai.configure(api_key=settings.API_GEMINI)
         self.sessions = {}  
-        # Sử dụng model 1.5 Flash (hoặc 2.0) vì bản "lite" thường hay bị lặp từ hơn
+        self.max_history_len = 4
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-lite",
+            model_name="gemini-2.5-flash-lite-preview-09-2025", 
             system_instruction=SYSTEM_PROMPT,
-            # generation_config={
-            #     "max_output_tokens": 300,
-            #     "temperature": 0.2, # Giảm xuống 0.2 để nó bớt "sáng tạo" lung tung
-            # }
+            generation_config={
+                # "temperature": 0.3,
+            }
         )
-
     def GEMINI(self, client_id, prompt):
-        if client_id not in self.sessions:
-            # Khởi tạo history rỗng chuẩn
-            self.sessions[client_id] = self.model.start_chat(history=[])
-            
-        chat = self.sessions[client_id]
+        # 1. Khởi tạo hoặc lấy lịch sử hiện có
+        # if client_id not in self.sessions:
+        #     self.sessions[client_id] = []
+        # history = self.sessions[client_id]
         try:
-            response = chat.send_message(prompt)
-            text = response.text.strip().replace("\n", " ")
+            text = bot.get_full_response(prompt)
+            print("[text llm ]",text)
+            # chat = self.model.start_chat(history=history)
+            # response = chat.send_message(prompt)
+            # text = response.text.strip().replace("\n", " ")
+            # history.append({"role": "user", "parts": [prompt]})
+            # history.append({"role": "model", "parts": [text]})
+            # if len(history) > self.max_history_len:
+            #     self.sessions[client_id] = history[-self.max_history_len:]
+            # else:
+            #     self.sessions[client_id] = history
+
             return text
         except Exception as e:
             print(f"[Gemini SDK Error] {e}")
+            if "context_leghth" in str(e).lower():
+                self.sessions[client_id] = []
             return "[vi]Kết nối đang gặp vấn đề ạ[/vi]"
-
     def OLLAMA(self, client_id, prompt):
         # 1. Khởi tạo session nếu chưa có
         if client_id not in self.sessions:
             self.sessions[client_id] = []
-
-        # 2. Xây dựng chuỗi ngữ cảnh từ lịch sử đã lưu
-        # Chúng ta sẽ biến các câu đối thoại cũ thành một đoạn văn bản
         context = ""
         for msg in self.sessions[client_id]:
             role = "Người dùng" if msg["role"] == "user" else "Trợ lý"
             context += f"{role}: {msg['content']}\n"
-
-        # 3. Cập nhật payload: Chèn context vào trước câu hỏi hiện tại
         url = self.url_llm
         headers = {"Content-Type": "application/json"}
         payload = {
@@ -71,7 +80,6 @@ class ASK_LLM:
                 "stop": ["Người dùng:", "\n"] 
             }
         }
-
         try:
             with requests.post(url, headers=headers, json=payload, stream=True, timeout=60) as r:
                 r.raise_for_status()
@@ -79,28 +87,16 @@ class ASK_LLM:
                 for line in r.iter_lines(decode_unicode=True):
                     if line:
                         full_text += line
-
                 ai_response = full_text.strip() if full_text else "Không có phản hồi từ mô hình."
-
-                # 4. LƯU LỊCH SỬ (QUAN TRỌNG)
-                # Lưu câu hỏi của user
                 self.sessions[client_id].append({"role": "user", "content": prompt})
-                # Lưu câu trả lời của AI
                 self.sessions[client_id].append({"role": "assistant", "content": ai_response})
-
-                # 5. Cắt tỉa lịch sử để prompt không bị quá dài (Giữ 6 tin nhắn gần nhất = 3 cặp đối thoại)
                 if len(self.sessions[client_id]) > 6:
                     self.sessions[client_id] = self.sessions[client_id][-6:]
-
                 return ai_response
-
         except Exception as e:
             print(f"--- [OLLAMA Error] {e} ---")
             return "Kết nối với mô hình Ollama đang gặp vấn đề."
         
-
-
-    
     def clear_session(self, client_id):
         """Xóa lịch sử hội thoại khi người dùng ngắt kết nối"""
         if client_id in self.sessions:
